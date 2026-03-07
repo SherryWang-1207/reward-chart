@@ -328,8 +328,8 @@ document.getElementById('modalOverlay').addEventListener('click', e => {
 
 // ===== REWARD CHART LOGIC =====
 const WEEKS = 4;
-const START_DATE = new Date(2026, 2, 6);
-const DAYS = ['五','六','日','一','二','三','四'];
+const START_DATE = new Date(2026, 2, 2);
+const DAYS = ['一','二','三','四','五','六','日'];
 
 function getDayDate(weekIdx, dayIdx) {
   const d = new Date(START_DATE.getTime() + (weekIdx * 7 + dayIdx) * 86400000);
