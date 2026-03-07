@@ -339,7 +339,7 @@ function getDayDate(weekIdx, dayIdx) {
 const SCORE_ITEMS = [
   { id: 'wash', icon: '🧼', name: '每天洗脸', rule: '逐天递加：连续第N天得N分', type: 'streak' },
   { id: 'homework', icon: '📝', name: '爸妈回来前写完作业', rule: '逐天递加：连续第N天得N分', type: 'streak' },
-  { id: 'leave', icon: '🏃', name: '8点前出门', rule: '逐天递加：连续第N天得N分', type: 'streak' },
+  { id: 'leave', icon: '🏃', name: '8点05分前出门', rule: '逐天递加：连续第N天得N分', type: 'streak' },
   { id: 'sleep', icon: '😴', name: '晚10点前睡觉', rule: '逐天递加：连续第N天得N分', type: 'streak' },
   { id: 'coding', icon: '💻', name: '核桃编程/体能课', rule: '每次 +2分', type: 'counter', pts: 2 },
   { id: 'oldclass', icon: '📚', name: '磕掉老课', rule: '每次 +5分', type: 'counter', pts: 5 },
@@ -577,7 +577,7 @@ function render() {
 
   // Deduction Card
   html += '<div class="card"><div class="card-title" style="color:var(--orange)">⚠️ 扣分项</div>';
-  html += '<div class="score-item"><div class="icon">🚫</div><div class="info"><div class="name">8:05后出门</div><div class="rule">每晚1分钟扣1分（填入迟到分钟数）</div>';
+  html += '<div class="score-item"><div class="icon">🚫</div><div class="info"><div class="name">8:05后出门</div><div class="rule">每晚1分钟扣1分（超过8:05的分钟数）</div>';
   html += '<div class="days-row">';
   for (let d = 0; d < 7; d++) {
     const val = data.weeks[currentWeek].deductions[d];
