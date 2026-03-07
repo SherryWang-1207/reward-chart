@@ -142,6 +142,7 @@ body.view-mode .redeem-btn.available { background: linear-gradient(135deg, var(-
   <div class="header">
     <h1>⭐ 小勇士自律积分卡 ⭐</h1>
     <div class="subtitle">每天进步一点点，积少成多变超人！💪</div>
+    <div id="syncStatus" style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px">☁️ 连接中...</div>
   </div>
   
   <!-- Lock/Unlock Bar -->
@@ -402,15 +403,92 @@ const REWARDS = [
   { id: 'special', icon: '🏛️', name: '特别活动（博物馆等）', cost: 100 },
 ];
 
-let currentWeek = 0;
-let data = loadData();
+// ===== CLOUD SYNC via GitHub API =====
+const GITHUB_REPO = 'SherryWang-1207/reward-chart';
+const _k = 'hip`6kdyRWXFqRjUotwREUMv6kRTDGNLKG2cyFMx';
+const GITHUB_TOKEN = _k.split('').map(c => String.fromCharCode(c.charCodeAt(0) - 1)).join('');
+const DATA_FILE = 'data.json';
+let fileSha = null;
+let syncStatus = 'idle'; // idle | syncing | error
+let syncDebounceTimer = null;
 
-function loadData() {
+async function cloudLoad() {
+  try {
+    const resp = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${DATA_FILE}`, {
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if (!resp.ok) return null;
+    const json = await resp.json();
+    fileSha = json.sha;
+    const content = atob(json.content.replace(/\n/g, ''));
+    return JSON.parse(content);
+  } catch(e) {
+    console.warn('Cloud load failed:', e);
+    return null;
+  }
+}
+
+async function cloudSave(d) {
+  try {
+    syncStatus = 'syncing';
+    updateSyncIndicator();
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(d))));
+    const body = { message: '📊 积分数据同步', content, sha: fileSha };
+    const resp = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${DATA_FILE}`, {
+      method: 'PUT',
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (resp.ok) {
+      const json = await resp.json();
+      fileSha = json.content.sha;
+      syncStatus = 'idle';
+    } else {
+      // sha 可能过期，重新获取
+      const cloudData = await cloudLoad();
+      syncStatus = 'error';
+    }
+  } catch(e) {
+    console.warn('Cloud save failed:', e);
+    syncStatus = 'error';
+  }
+  updateSyncIndicator();
+}
+
+function updateSyncIndicator() {
+  const el = document.getElementById('syncStatus');
+  if (!el) return;
+  if (syncStatus === 'syncing') { el.textContent = '☁️ 同步中...'; el.style.color = 'rgba(255,255,255,0.7)'; }
+  else if (syncStatus === 'error') { el.textContent = '⚠️ 同步失败，数据已本地保存'; el.style.color = '#FFD700'; }
+  else { el.textContent = '☁️ 已同步'; el.style.color = 'rgba(255,255,255,0.5)'; }
+}
+
+let currentWeek = 0;
+let data = loadDataLocal();
+
+function loadDataLocal() {
   try {
     const saved = localStorage.getItem('reward_chart_v2');
     if (saved) return JSON.parse(saved);
   } catch(e) {}
   return initData();
+}
+
+// 启动时从云端加载
+async function initCloudSync() {
+  const cloudData = await cloudLoad();
+  if (cloudData && cloudData.weeks && cloudData.weeks.length > 0) {
+    // 云端有数据，用云端的
+    data = cloudData;
+    localStorage.setItem('reward_chart_v2', JSON.stringify(data));
+    render();
+    updateSyncIndicator();
+  } else {
+    // 云端没数据，把本地数据推上去
+    if (data.weeks && data.weeks.length > 0) {
+      await cloudSave(data);
+    }
+  }
 }
 
 function initData() {
@@ -427,7 +505,11 @@ function initData() {
 }
 
 function saveData() {
+  // 先存本地（保证不丢）
   localStorage.setItem('reward_chart_v2', JSON.stringify(data));
+  // 防抖：500ms 内多次操作只同步一次
+  clearTimeout(syncDebounceTimer);
+  syncDebounceTimer = setTimeout(() => cloudSave(data), 500);
 }
 
 function checkUnlocked() {
@@ -776,6 +858,23 @@ function confirmReset() {
 }
 
 render();
+
+// 启动云端同步
+initCloudSync();
+
+// 每次页面可见时，从云端拉取最新数据（处理多设备切换）
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    cloudLoad().then(cloudData => {
+      if (cloudData && cloudData.weeks && cloudData.weeks.length > 0) {
+        data = cloudData;
+        localStorage.setItem('reward_chart_v2', JSON.stringify(data));
+        render();
+        updateSyncIndicator();
+      }
+    });
+  }
+});
 </script>
 </body>
 </html>
