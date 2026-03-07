@@ -190,6 +190,18 @@ body.view-mode .redeem-btn.available { background: linear-gradient(135deg, var(-
   </div>
 </div>
 
+<!-- Confirm Dialog (no password) -->
+<div class="modal-overlay" id="confirmOverlay">
+  <div class="modal">
+    <h3 id="confirmTitle">确认</h3>
+    <p id="confirmMsg" style="font-size:15px;color:#333;margin-bottom:16px"></p>
+    <div class="btn-row">
+      <button class="btn-cancel" onclick="closeConfirm()">再想想</button>
+      <button class="btn-confirm" onclick="doConfirm()">确定！</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <div class="confetti-container" id="confetti"></div>
 
@@ -258,10 +270,7 @@ async function submitPassword() {
     const stored = getStoredHash();
     if (hash === stored) {
       closeModal();
-      if (modalMode === 'redeem' && pendingRedeemId) {
-        doRedeem(pendingRedeemId);
-        pendingRedeemId = null;
-      } else if (modalMode === 'cancel' && pendingCancelId) {
+      if (modalMode === 'cancel' && pendingCancelId) {
         doCancelRedeem(pendingCancelWeek, pendingCancelId);
         pendingCancelWeek = null;
         pendingCancelId = null;
@@ -332,6 +341,33 @@ document.getElementById('pwdInput').addEventListener('keydown', e => {
 // Click outside modal to close
 document.getElementById('modalOverlay').addEventListener('click', e => {
   if (e.target === document.getElementById('modalOverlay')) closeModal();
+});
+
+// ===== CONFIRM DIALOG (no password) =====
+let confirmCallback = null;
+
+function showConfirmDialog(title, msg, onConfirm) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').textContent = msg;
+  confirmCallback = onConfirm;
+  document.getElementById('confirmOverlay').classList.add('show');
+}
+
+function closeConfirm() {
+  document.getElementById('confirmOverlay').classList.remove('show');
+  confirmCallback = null;
+}
+
+function doConfirm() {
+  document.getElementById('confirmOverlay').classList.remove('show');
+  if (confirmCallback) {
+    confirmCallback();
+    confirmCallback = null;
+  }
+}
+
+document.getElementById('confirmOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('confirmOverlay')) closeConfirm();
 });
 
 // ===== REWARD CHART LOGIC =====
@@ -509,20 +545,12 @@ function redeemReward(rewardId) {
     return;
   }
   
-  // 如果已解锁，直接兑换；否则弹密码确认
-  if (isUnlocked) {
-    doRedeem(rewardId);
-  } else {
-    pendingRedeemId = rewardId;
-    modalMode = 'redeem';
-    document.getElementById('modalTitle').textContent = '🎁 兑换确认';
-    document.getElementById('modalSubtitle').textContent = `确认兑换「${reward.icon} ${reward.name}」？请输入家长密码`;
-    document.getElementById('setupNote').innerHTML = '';
-    document.getElementById('pwdInput').value = '';
-    document.getElementById('errorMsg').textContent = '';
-    document.getElementById('modalOverlay').classList.add('show');
-    setTimeout(() => document.getElementById('pwdInput').focus(), 300);
-  }
+  // 弹窗确认，防止误操作
+  pendingRedeemId = rewardId;
+  showConfirmDialog('🎁 确认兑换', `确定要用 ${reward.cost} 积分兑换「${reward.icon} ${reward.name}」吗？`, function() {
+    doRedeem(pendingRedeemId);
+    pendingRedeemId = null;
+  });
 }
 
 function doRedeem(rewardId) {
