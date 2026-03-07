@@ -33,9 +33,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 body.view-mode .day-btn { pointer-events: none; }
 body.view-mode .counter-btn { pointer-events: none; opacity: 0.4; }
 body.view-mode .deduct-input-field { pointer-events: none; opacity: 0.5; }
-body.view-mode .redeem-btn { pointer-events: none; opacity: 0.4; }
 body.view-mode .reset-bar { display: none; }
-body.view-mode .redeem-btn.available { background: #ccc; color: #999; box-shadow: none; }
+body.view-mode .redeem-btn.available { background: linear-gradient(135deg, var(--purple), #9B59B6); color: white; box-shadow: 0 2px 8px rgba(112,48,160,0.3); }
 
 /* Password Modal */
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
@@ -259,8 +258,13 @@ async function submitPassword() {
     const stored = getStoredHash();
     if (hash === stored) {
       closeModal();
-      unlock();
-      showToast('🔓 已解锁，10分钟后自动锁定');
+      if (modalMode === 'redeem' && pendingRedeemId) {
+        doRedeem(pendingRedeemId);
+        pendingRedeemId = null;
+      } else {
+        unlock();
+        showToast('🔓 已解锁，10分钟后自动锁定');
+      }
     } else {
       document.getElementById('errorMsg').textContent = '❌ 密码错误';
       document.getElementById('pwdInput').classList.add('error');
@@ -484,8 +488,9 @@ function updateDeduction(dayIdx, value) {
   render();
 }
 
+let pendingRedeemId = null;
+
 function redeemReward(rewardId) {
-  if (!checkUnlocked()) return;
   const reward = REWARDS.find(r => r.id === rewardId);
   const redeemed = data.weeks[currentWeek].redeemed;
   const count = redeemed[rewardId] || 0;
@@ -500,6 +505,26 @@ function redeemReward(rewardId) {
     return;
   }
   
+  // 如果已解锁，直接兑换；否则弹密码确认
+  if (isUnlocked) {
+    doRedeem(rewardId);
+  } else {
+    pendingRedeemId = rewardId;
+    modalMode = 'redeem';
+    document.getElementById('modalTitle').textContent = '🎁 兑换确认';
+    document.getElementById('modalSubtitle').textContent = `确认兑换「${reward.icon} ${reward.name}」？请输入家长密码`;
+    document.getElementById('setupNote').innerHTML = '';
+    document.getElementById('pwdInput').value = '';
+    document.getElementById('errorMsg').textContent = '';
+    document.getElementById('modalOverlay').classList.add('show');
+    setTimeout(() => document.getElementById('pwdInput').focus(), 300);
+  }
+}
+
+function doRedeem(rewardId) {
+  const reward = REWARDS.find(r => r.id === rewardId);
+  const redeemed = data.weeks[currentWeek].redeemed;
+  const count = redeemed[rewardId] || 0;
   redeemed[rewardId] = count + 1;
   saveData();
   render();
