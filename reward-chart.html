@@ -261,6 +261,10 @@ async function submitPassword() {
       if (modalMode === 'redeem' && pendingRedeemId) {
         doRedeem(pendingRedeemId);
         pendingRedeemId = null;
+      } else if (modalMode === 'cancel' && pendingCancelId) {
+        doCancelRedeem(pendingCancelWeek, pendingCancelId);
+        pendingCancelWeek = null;
+        pendingCancelId = null;
       } else {
         unlock();
         showToast('🔓 已解锁，10分钟后自动锁定');
@@ -532,15 +536,41 @@ function doRedeem(rewardId) {
   fireConfetti();
 }
 
-function undoRedeem(rewardId) {
-  if (!checkUnlocked()) return;
-  const redeemed = data.weeks[currentWeek].redeemed;
+let pendingCancelWeek = null;
+let pendingCancelId = null;
+
+function cancelRedeem(weekIdx, rewardId) {
+  const reward = REWARDS.find(r => r.id === rewardId);
+  // 需要密码确认
+  if (isUnlocked) {
+    doCancelRedeem(weekIdx, rewardId);
+  } else {
+    pendingCancelWeek = weekIdx;
+    pendingCancelId = rewardId;
+    modalMode = 'cancel';
+    document.getElementById('modalTitle').textContent = '↩️ 取消兑换';
+    document.getElementById('modalSubtitle').textContent = `确认退回「${reward.icon} ${reward.name}」？积分将返还。请输入家长密码`;
+    document.getElementById('setupNote').innerHTML = '';
+    document.getElementById('pwdInput').value = '';
+    document.getElementById('errorMsg').textContent = '';
+    document.getElementById('modalOverlay').classList.add('show');
+    setTimeout(() => document.getElementById('pwdInput').focus(), 300);
+  }
+}
+
+function doCancelRedeem(weekIdx, rewardId) {
+  const redeemed = data.weeks[weekIdx].redeemed;
   if ((redeemed[rewardId] || 0) > 0) {
     redeemed[rewardId]--;
     saveData();
     render();
-    showToast('↩️ 已撤销兑换');
+    const reward = REWARDS.find(r => r.id === rewardId);
+    showToast(`↩️ 已退回「${reward.icon} ${reward.name}」，+${reward.cost}积分`);
   }
+}
+
+function undoRedeem(rewardId) {
+  cancelRedeem(currentWeek, rewardId);
 }
 
 function render() {
@@ -632,12 +662,40 @@ function render() {
         <div class="r-name">${r.name}</div>
         <div class="r-cost">${r.cost}积分${r.limit ? ' · ' + r.limit : ''}</div>
       </div>`;
-    if (count > 0) {
-      html += `<button class="redeem-btn redeemed" onclick="undoRedeem('${r.id}')" style="margin-right:6px;font-size:10px;padding:4px 8px">↩️</button>`;
-    }
     html += `<button class="redeem-btn ${btnClass}" onclick="redeemReward('${r.id}')">${btnText}</button></div>`;
   });
   html += '</div>';
+
+  // Redeemed History Card - 已兑换记录
+  let hasRedeemed = false;
+  let redeemedHtml = '';
+  for (let w = 0; w < WEEKS; w++) {
+    const weekRedeemed = data.weeks[w].redeemed;
+    REWARDS.forEach(r => {
+      const cnt = weekRedeemed[r.id] || 0;
+      if (cnt > 0) {
+        hasRedeemed = true;
+        const ws = new Date(START_DATE.getTime() + w * 7 * 86400000);
+        const we = new Date(ws.getTime() + 6 * 86400000);
+        const weekStr = `第${w+1}周 (${ws.getMonth()+1}/${ws.getDate()}-${we.getMonth()+1}/${we.getDate()})`;
+        for (let i = 0; i < cnt; i++) {
+          redeemedHtml += `<div class="reward-item" style="padding:8px 0">
+            <div class="r-icon">${r.icon}</div>
+            <div class="r-info">
+              <div class="r-name">${r.name}</div>
+              <div class="r-cost" style="font-size:11px;color:#999">${weekStr} · ${r.cost}积分</div>
+            </div>
+            <button class="redeem-btn" onclick="cancelRedeem(${w},'${r.id}')" 
+              style="background:var(--light-orange);color:var(--orange);font-size:11px;padding:6px 10px;border:1px solid var(--orange)">
+              退回积分</button>
+          </div>`;
+        }
+      }
+    });
+  }
+  if (hasRedeemed) {
+    html += `<div class="card"><div class="card-title" style="color:var(--orange)">📋 已兑换记录 <span style="font-size:12px;font-weight:400;color:#999">（可取消退回积分）</span></div>${redeemedHtml}</div>`;
+  }
 
   // Summary
   html += `<div class="card">
