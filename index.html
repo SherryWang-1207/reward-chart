@@ -382,10 +382,10 @@ function getDayDate(weekIdx, dayIdx) {
 }
 
 const SCORE_ITEMS = [
-  { id: 'wash', icon: '🧼', name: '每天洗脸', rule: '逐天递加：连续第N天得N分', type: 'streak' },
-  { id: 'homework', icon: '📝', name: '爸妈回来前写完作业', rule: '逐天递加：连续第N天得N分', type: 'streak' },
-  { id: 'leave', icon: '🏃', name: '8点05分前出门', rule: '逐天递加：连续第N天得N分', type: 'streak' },
-  { id: 'sleep', icon: '😴', name: '晚10点前睡觉', rule: '逐天递加：连续第N天得N分', type: 'streak' },
+  { id: 'wash', icon: '🧼', name: '每天洗脸', rule: '逐天递加：每周从1开始，连续第N天得N分', type: 'streak' },
+  { id: 'homework', icon: '📝', name: '爸妈回来前写完作业', rule: '逐天递加：每周从1开始，连续第N天得N分', type: 'streak' },
+  { id: 'leave', icon: '🏃', name: '8点05分前出门', rule: '逐天递加：每周从1开始，连续第N天得N分', type: 'streak' },
+  { id: 'sleep', icon: '😴', name: '晚10点前睡觉', rule: '逐天递加：每周从1开始，连续第N天得N分', type: 'streak' },
   { id: 'coding', icon: '💻', name: '核桃编程/体能课', rule: '每次 +2分', type: 'counter', pts: 2 },
   { id: 'oldclass', icon: '📚', name: '磕掉老课', rule: '每次 +5分', type: 'counter', pts: 5 },
   { id: 'story', icon: '📖', name: '读故事分享给爸妈', rule: '每次 +2分', type: 'counter', pts: 2 },
@@ -521,14 +521,11 @@ function checkUnlocked() {
 }
 
 function getStreakPoints(checked, weekIdx, dayIdx) {
+  // 每周一重新从1开始计算连续天数（不跨周累计）
   let streak = 0;
-  for (let w = weekIdx; w >= 0; w--) {
-    const startDay = (w === weekIdx) ? dayIdx : 6;
-    for (let d = startDay; d >= 0; d--) {
-      if (w === weekIdx && d > dayIdx) continue;
-      if (data.weeks[w].scores[checked][d]) streak++;
-      else return streak;
-    }
+  for (let d = dayIdx; d >= 0; d--) {
+    if (data.weeks[weekIdx].scores[checked][d]) streak++;
+    else return streak;
   }
   return streak;
 }
