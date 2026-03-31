@@ -372,7 +372,7 @@ document.getElementById('confirmOverlay').addEventListener('click', e => {
 });
 
 // ===== REWARD CHART LOGIC =====
-const WEEKS = 4;
+const WEEKS = 43;
 const START_DATE = new Date(2026, 2, 2);
 const DAYS = ['一','二','三','四','五','六','日'];
 
@@ -469,7 +469,7 @@ let data = loadDataLocal();
 function loadDataLocal() {
   try {
     const saved = localStorage.getItem('reward_chart_v2');
-    if (saved) return JSON.parse(saved);
+    if (saved) return ensureWeeks(JSON.parse(saved));
   } catch(e) {}
   return initData();
 }
@@ -478,8 +478,8 @@ function loadDataLocal() {
 async function initCloudSync() {
   const cloudData = await cloudLoad();
   if (cloudData && cloudData.weeks && cloudData.weeks.length > 0) {
-    // 云端有数据，用云端的
-    data = cloudData;
+    // 云端有数据，用云端的（并补足周数）
+    data = ensureWeeks(cloudData);
     localStorage.setItem('reward_chart_v2', JSON.stringify(data));
     render();
     updateSyncIndicator();
@@ -494,6 +494,19 @@ async function initCloudSync() {
 function initData() {
   const d = { weeks: [] };
   for (let w = 0; w < WEEKS; w++) {
+    const week = { scores: {}, deductions: Array(7).fill(0), redeemed: {} };
+    SCORE_ITEMS.forEach(item => {
+      if (item.type === 'streak') week.scores[item.id] = Array(7).fill(false);
+      else week.scores[item.id] = 0;
+    });
+    d.weeks.push(week);
+  }
+  return d;
+}
+
+// 确保数据中有足够的周（兼容旧存档自动扩展）
+function ensureWeeks(d) {
+  while (d.weeks.length < WEEKS) {
     const week = { scores: {}, deductions: Array(7).fill(0), redeemed: {} };
     SCORE_ITEMS.forEach(item => {
       if (item.type === 'streak') week.scores[item.id] = Array(7).fill(false);
@@ -864,7 +877,7 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     cloudLoad().then(cloudData => {
       if (cloudData && cloudData.weeks && cloudData.weeks.length > 0) {
-        data = cloudData;
+        data = ensureWeeks(cloudData);
         localStorage.setItem('reward_chart_v2', JSON.stringify(data));
         render();
         updateSyncIndicator();
