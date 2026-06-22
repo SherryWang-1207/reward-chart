@@ -34,6 +34,7 @@ body.view-mode .day-btn { pointer-events: none; }
 body.view-mode .counter-btn { pointer-events: none; opacity: 0.4; }
 body.view-mode .deduct-input-field { pointer-events: none; opacity: 0.5; }
 body.view-mode .reset-bar { display: none; }
+body.view-mode .config-bar { display: none; }
 body.view-mode .redeem-btn.available { background: linear-gradient(135deg, var(--purple), #9B59B6); color: white; box-shadow: 0 2px 8px rgba(112,48,160,0.3); }
 
 /* Password Modal */
@@ -124,8 +125,71 @@ body.view-mode .redeem-btn.available { background: linear-gradient(135deg, var(-
 
 /* Reset */
 .reset-bar { text-align: center; padding: 20px 0 40px; }
+.config-bar { text-align: center; padding: 0 0 40px; }
 .reset-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.7); padding: 8px 20px; border-radius: 20px; font-size: 12px; cursor: pointer; }
 .reset-btn:active { background: rgba(255,0,0,0.3); }
+
+/* Custom Config Panel */
+.config-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.9); padding: 8px 20px; border-radius: 20px; font-size: 12px; cursor: pointer; margin-top: 8px; }
+.config-btn:active { background: rgba(255,255,255,0.35); }
+.config-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1100; display: none; backdrop-filter: blur(4px); }
+.config-overlay.show { display: block; }
+.config-panel { position: fixed; left: 0; right: 0; bottom: 0; max-height: 90vh; background: #f8f9fa; border-radius: 20px 20px 0 0; z-index: 1101; transform: translateY(100%); transition: transform 0.35s ease; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.config-panel.show { transform: translateY(0); }
+.config-panel-header { position: sticky; top: 0; background: white; padding: 16px 20px 12px; border-radius: 20px 20px 0 0; border-bottom: 1px solid #eee; z-index: 2; }
+.config-panel-header::before { content: ''; display: block; width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 12px; }
+.config-panel-header h3 { font-size: 18px; color: var(--blue); text-align: center; }
+.config-panel-body { padding: 16px; padding-bottom: 100px; }
+.config-section { background: white; border-radius: 14px; padding: 16px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.config-section h4 { font-size: 15px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.config-item-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; gap: 8px; }
+.config-item-row:last-child { border-bottom: none; }
+.config-item-row .ci-icon { font-size: 20px; width: 32px; text-align: center; flex-shrink: 0; }
+.config-item-row .ci-info { flex: 1; min-width: 0; }
+.config-item-row .ci-name { font-size: 14px; font-weight: 600; }
+.config-item-row .ci-rule { font-size: 11px; color: #999; margin-top: 2px; }
+.config-item-row .ci-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.ci-actions button { width: 32px; height: 32px; border-radius: 50%; border: none; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.ci-actions .ci-edit { background: var(--light-blue); color: var(--blue); }
+.ci-actions .ci-delete { background: #fde8e8; color: var(--red); }
+.ci-actions button:active { transform: scale(0.9); }
+.config-add-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 12px; border: 2px dashed #ddd; border-radius: 12px; background: transparent; font-size: 14px; color: #999; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
+.config-add-btn:active { background: var(--light-blue); border-color: var(--blue); color: var(--blue); }
+.config-footer { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 12px 20px; padding-bottom: max(12px, env(safe-area-inset-bottom)); border-top: 1px solid #eee; z-index: 1102; display: flex; gap: 12px; }
+.config-footer button { flex: 1; height: 44px; border-radius: 12px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.config-footer .cfg-cancel { background: #f0f0f0; color: #666; }
+.config-footer .cfg-save { background: var(--green); color: white; }
+.config-footer button:active { transform: scale(0.97); }
+
+/* Config Form (add/edit item) */
+.config-form-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1200; display: none; align-items: flex-end; justify-content: center; }
+.config-form-overlay.show { display: flex; }
+.config-form { background: white; border-radius: 20px 20px 0 0; width: 100%; max-width: 500px; padding: 20px 20px 100px; max-height: 85vh; overflow-y: auto; animation: slideUp 0.3s ease; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.config-form h4 { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 20px; color: var(--blue); }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 13px; font-weight: 600; color: #666; margin-bottom: 6px; }
+.form-group input[type="text"], .form-group input[type="number"] { width: 100%; height: 44px; border: 2px solid #e0e0e0; border-radius: 12px; padding: 0 14px; font-size: 15px; outline: none; transition: border-color 0.2s; }
+.form-group input:focus { border-color: var(--blue); }
+.emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
+.emoji-option { width: 100%; aspect-ratio: 1; border: 2px solid #eee; border-radius: 10px; font-size: 22px; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.emoji-option.selected { border-color: var(--blue); background: var(--light-blue); transform: scale(1.1); }
+.emoji-option:active { transform: scale(0.9); }
+.emoji-custom-input { margin-top: 8px; display: flex; gap: 8px; align-items: center; }
+.emoji-custom-input input { flex: 1; height: 40px; border: 2px solid #e0e0e0; border-radius: 10px; text-align: center; font-size: 20px; outline: none; }
+.emoji-custom-input input:focus { border-color: var(--blue); }
+.type-selector { display: flex; gap: 8px; }
+.type-option { flex: 1; padding: 12px 8px; border: 2px solid #e0e0e0; border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.2s; background: white; }
+.type-option.selected { border-color: var(--blue); background: var(--light-blue); }
+.type-option:active { transform: scale(0.97); }
+.type-option .to-label { font-size: 13px; font-weight: 600; color: #333; }
+.type-option .to-desc { font-size: 10px; color: #999; margin-top: 4px; }
+.form-actions { display: flex; gap: 12px; margin-top: 24px; }
+.form-actions button { flex: 1; height: 44px; border-radius: 12px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.form-actions .fa-cancel { background: #f0f0f0; color: #666; }
+.form-actions .fa-save { background: var(--blue); color: white; }
+.form-actions button:active { transform: scale(0.97); }
+.config-empty { text-align: center; padding: 16px; color: #ccc; font-size: 13px; }
 
 /* Toast */
 .toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: rgba(0,0,0,0.8); color: white; padding: 16px 24px; border-radius: 12px; font-size: 16px; z-index: 999; opacity: 0; transition: all 0.3s; pointer-events: none; text-align: center; }
@@ -174,6 +238,9 @@ body.view-mode .redeem-btn.available { background: linear-gradient(135deg, var(-
   <div class="reset-bar">
     <button class="reset-btn" onclick="confirmReset()">🔄 重置所有数据</button>
   </div>
+  <div class="config-bar">
+    <button class="config-btn" onclick="openConfigPanel()">⚙️ 自定义项目</button>
+  </div>
 </div>
 
 <!-- Password Modal -->
@@ -201,6 +268,24 @@ body.view-mode .redeem-btn.available { background: linear-gradient(135deg, var(-
       <button class="btn-confirm" onclick="doConfirm()">确定！</button>
     </div>
   </div>
+</div>
+
+<!-- Config Panel -->
+<div class="config-overlay" id="configOverlay" onclick="closeConfigPanel()"></div>
+<div class="config-panel" id="configPanel">
+  <div class="config-panel-header">
+    <h3>⚙️ 自定义项目</h3>
+  </div>
+  <div class="config-panel-body" id="configPanelBody"></div>
+  <div class="config-footer">
+    <button class="cfg-cancel" onclick="closeConfigPanel()">取消</button>
+    <button class="cfg-save" onclick="saveConfigPanel()">💾 保存</button>
+  </div>
+</div>
+
+<!-- Config Form (add/edit) -->
+<div class="config-form-overlay" id="configFormOverlay">
+  <div class="config-form" id="configForm"></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -492,7 +577,7 @@ async function initCloudSync() {
 }
 
 function initData() {
-  const d = { weeks: [] };
+  const d = { weeks: [], customItems: { scores: [], deductions: [] } };
   for (let w = 0; w < WEEKS; w++) {
     const week = { scores: {}, deductions: Array(7).fill(0), redeemed: {} };
     SCORE_ITEMS.forEach(item => {
@@ -506,14 +591,38 @@ function initData() {
 
 // 确保数据中有足够的周（兼容旧存档自动扩展）
 function ensureWeeks(d) {
+  // 兼容旧数据：没有 customItems 字段时自动初始化
+  if (!d.customItems) d.customItems = { scores: [], deductions: [] };
+  if (!d.customItems.scores) d.customItems.scores = [];
+  if (!d.customItems.deductions) d.customItems.deductions = [];
+
+  // 获取所有自定义项，用于初始化周数据
+  const allCustom = [...d.customItems.scores, ...d.customItems.deductions];
+
   while (d.weeks.length < WEEKS) {
     const week = { scores: {}, deductions: Array(7).fill(0), redeemed: {} };
     SCORE_ITEMS.forEach(item => {
       if (item.type === 'streak') week.scores[item.id] = Array(7).fill(false);
       else week.scores[item.id] = 0;
     });
+    // 初始化自定义项的数据
+    allCustom.forEach(item => {
+      if (item.type === 'streak') week.scores[item.id] = Array(7).fill(false);
+      else week.scores[item.id] = 0;
+    });
     d.weeks.push(week);
   }
+
+  // 确保已有周数据中也包含自定义项的 scores（新增自定义项后旧周数据里没有）
+  d.weeks.forEach(week => {
+    allCustom.forEach(item => {
+      if (!(item.id in week.scores)) {
+        if (item.type === 'streak') week.scores[item.id] = Array(7).fill(false);
+        else week.scores[item.id] = 0;
+      }
+    });
+  });
+
   return d;
 }
 
@@ -535,9 +644,11 @@ function checkUnlocked() {
 
 function getStreakPoints(checked, weekIdx, dayIdx) {
   // 每周一重新从1开始计算连续天数（不跨周累计）
+  const scores = data.weeks[weekIdx].scores[checked];
+  if (!scores || !Array.isArray(scores)) return 0;
   let streak = 0;
   for (let d = dayIdx; d >= 0; d--) {
-    if (data.weeks[weekIdx].scores[checked][d]) streak++;
+    if (scores[d]) streak++;
     else return streak;
   }
   return streak;
@@ -545,6 +656,7 @@ function getStreakPoints(checked, weekIdx, dayIdx) {
 
 function getItemWeekPoints(item, weekIdx) {
   const week = data.weeks[weekIdx];
+  if (!week.scores[item.id]) return 0;
   if (item.type === 'streak') {
     let total = 0;
     for (let d = 0; d < 7; d++) {
@@ -554,15 +666,28 @@ function getItemWeekPoints(item, weekIdx) {
     }
     return total;
   }
-  return week.scores[item.id] * item.pts;
+  return (week.scores[item.id] || 0) * item.pts;
+}
+
+function getAllScoreItems() {
+  return [...SCORE_ITEMS, ...(data.customItems ? data.customItems.scores : [])];
+}
+
+function getAllDeductionItems() {
+  return data.customItems ? data.customItems.deductions : [];
 }
 
 function getWeekScoreTotal(weekIdx) {
-  return SCORE_ITEMS.reduce((sum, item) => sum + getItemWeekPoints(item, weekIdx), 0);
+  return getAllScoreItems().reduce((sum, item) => sum + getItemWeekPoints(item, weekIdx), 0);
 }
 
 function getWeekDeductTotal(weekIdx) {
-  return data.weeks[weekIdx].deductions.reduce((a, b) => a + b, 0);
+  let total = data.weeks[weekIdx].deductions.reduce((a, b) => a + b, 0);
+  // 加上自定义扣分项
+  getAllDeductionItems().forEach(item => {
+    total += getItemWeekPoints(item, weekIdx);
+  });
+  return total;
 }
 
 function getWeekRedeemTotal(weekIdx) {
@@ -592,18 +717,31 @@ function changeWeek(delta) {
 
 function toggleDay(itemId, dayIdx) {
   if (!checkUnlocked()) return;
+  // 确保数据存在
+  if (!data.weeks[currentWeek].scores[itemId]) {
+    data.weeks[currentWeek].scores[itemId] = Array(7).fill(false);
+  }
   data.weeks[currentWeek].scores[itemId][dayIdx] = !data.weeks[currentWeek].scores[itemId][dayIdx];
   saveData();
   render();
   if (data.weeks[currentWeek].scores[itemId][dayIdx]) {
     const streak = getStreakPoints(itemId, currentWeek, dayIdx);
-    if (streak >= 7) showToast('🔥 连续7天！太厉害了！');
-    else if (streak >= 3) showToast(`⚡ 连续${streak}天！+${streak}分`);
+    // 检查是否是扣分项
+    const isDeduction = getAllDeductionItems().some(di => di.id === itemId);
+    if (isDeduction) {
+      if (streak >= 3) showToast(`⚠️ 连续${streak}天，扣${streak}分`);
+    } else {
+      if (streak >= 7) showToast('🔥 连续7天！太厉害了！');
+      else if (streak >= 3) showToast(`⚡ 连续${streak}天！+${streak}分`);
+    }
   }
 }
 
 function changeCounter(itemId, delta) {
   if (!checkUnlocked()) return;
+  if (!(itemId in data.weeks[currentWeek].scores)) {
+    data.weeks[currentWeek].scores[itemId] = 0;
+  }
   const val = data.weeks[currentWeek].scores[itemId] + delta;
   if (val >= 0) {
     data.weeks[currentWeek].scores[itemId] = val;
@@ -715,14 +853,17 @@ function render() {
   
   // Score Card
   html += '<div class="card"><div class="card-title" style="color:var(--green)">🏆 得分表</div>';
-  SCORE_ITEMS.forEach(item => {
+  const allScoreItems = getAllScoreItems();
+  allScoreItems.forEach(item => {
     const pts = getItemWeekPoints(item, currentWeek);
-    html += `<div class="score-item"><div class="icon">${item.icon}</div><div class="info"><div class="name">${item.name}</div><div class="rule">${item.rule}</div>`;
+    const isCustom = item.id.startsWith('custom_');
+    const nameLabel = isCustom ? `${item.name} <span style="font-size:10px;color:var(--purple);font-weight:400">[自定义]</span>` : item.name;
+    html += `<div class="score-item"><div class="icon">${item.icon}</div><div class="info"><div class="name">${nameLabel}</div><div class="rule">${item.rule}</div>`;
     
     if (item.type === 'streak') {
       html += '<div class="days-row">';
       for (let d = 0; d < 7; d++) {
-        const checked = data.weeks[currentWeek].scores[item.id][d];
+        const checked = data.weeks[currentWeek].scores[item.id] && data.weeks[currentWeek].scores[item.id][d];
         const streak = checked ? getStreakPoints(item.id, currentWeek, d) : 0;
         html += `<div class="day-btn ${checked?'checked':''}" onclick="toggleDay('${item.id}',${d})">
           <span class="day-label">${DAYS[d]} ${getDayDate(currentWeek,d)}</span>
@@ -731,14 +872,14 @@ function render() {
       html += '</div>';
       let currentStreak = 0;
       for (let d = 6; d >= 0; d--) {
-        if (data.weeks[currentWeek].scores[item.id][d]) {
+        if (data.weeks[currentWeek].scores[item.id] && data.weeks[currentWeek].scores[item.id][d]) {
           currentStreak = getStreakPoints(item.id, currentWeek, d);
           break;
         }
       }
       if (currentStreak > 0) html += `<div class="streak-info">🔥 当前连续 ${currentStreak} 天</div>`;
     } else {
-      const count = data.weeks[currentWeek].scores[item.id];
+      const count = data.weeks[currentWeek].scores[item.id] || 0;
       html += `<div class="counter-row">
         <button class="counter-btn" onclick="changeCounter('${item.id}',-1)">−</button>
         <span class="counter-val">${count}</span>
@@ -762,8 +903,47 @@ function render() {
         style="width:36px;height:30px;border:1.5px solid ${val?'var(--red)':'#ddd'};border-radius:8px;text-align:center;font-size:12px;font-weight:600;color:var(--red);background:${val?'var(--light-orange)':'white'}"></div>`;
   }
   html += '</div></div>';
+  const builtinDeduct = data.weeks[currentWeek].deductions.reduce((a, b) => a + b, 0);
+  html += `<div class="points-earned" style="color:var(--red)">${builtinDeduct > 0 ? '-' + builtinDeduct : '0'}</div></div>`;
+
+  // Custom Deduction Items
+  const customDeductions = getAllDeductionItems();
+  customDeductions.forEach(item => {
+    const pts = getItemWeekPoints(item, currentWeek);
+    html += `<div class="score-item"><div class="icon">${item.icon}</div><div class="info"><div class="name">${item.name} <span style="font-size:10px;color:var(--purple);font-weight:400">[自定义]</span></div><div class="rule">${item.rule}</div>`;
+    
+    if (item.type === 'streak') {
+      html += '<div class="days-row">';
+      for (let d = 0; d < 7; d++) {
+        const checked = data.weeks[currentWeek].scores[item.id] && data.weeks[currentWeek].scores[item.id][d];
+        const streak = checked ? getStreakPoints(item.id, currentWeek, d) : 0;
+        html += `<div class="day-btn ${checked?'checked':''}" onclick="toggleDay('${item.id}',${d})" style="${checked?'border-color:var(--red);background:var(--light-orange)':''}">
+          <span class="day-label">${DAYS[d]} ${getDayDate(currentWeek,d)}</span>
+          <span class="day-pts" style="color:var(--red)">${checked ? '-'+streak : ''}</span></div>`;
+      }
+      html += '</div>';
+      let currentStreak = 0;
+      for (let d = 6; d >= 0; d--) {
+        if (data.weeks[currentWeek].scores[item.id] && data.weeks[currentWeek].scores[item.id][d]) {
+          currentStreak = getStreakPoints(item.id, currentWeek, d);
+          break;
+        }
+      }
+      if (currentStreak > 0) html += `<div class="streak-info" style="color:var(--red)">⚠️ 连续 ${currentStreak} 天</div>`;
+    } else {
+      const count = data.weeks[currentWeek].scores[item.id] || 0;
+      html += `<div class="counter-row">
+        <button class="counter-btn" onclick="changeCounter('${item.id}',-1)" style="border-color:var(--red);color:var(--red)">−</button>
+        <span class="counter-val">${count}</span>
+        <button class="counter-btn" onclick="changeCounter('${item.id}',1)" style="border-color:var(--red);color:var(--red)">+</button>
+        <span style="font-size:11px;color:#999">× ${item.pts}分</span></div>`;
+    }
+    
+    html += `</div><div class="points-earned" style="color:var(--red)">${pts > 0 ? '-'+pts : '0'}</div></div>`;
+  });
+
   const deductTotal = getWeekDeductTotal(currentWeek);
-  html += `<div class="points-earned" style="color:var(--red)">${deductTotal > 0 ? '-' + deductTotal : '0'}</div></div></div>`;
+  html += '</div>';
 
   // Reward Card
   html += '<div class="card"><div class="card-title" style="color:var(--purple)">🎁 积分兑换</div>';
@@ -866,6 +1046,276 @@ function confirmReset() {
     }
   }
 }
+
+// ===== CUSTOM ITEMS CONFIG PANEL =====
+const EMOJI_PRESETS = [
+  '🎨','🎵','🏀','⚽','🚴','🎮','📚','✍️',
+  '🧹','🛏️','🚀','🌟','💪','🧘','🍳','🌳',
+  '🎯','🧩','🔬','🎹','🐶','🚗','✈️','🌈',
+  '😤','😭','😡','😵','🤯','😴','📱','📺'
+];
+
+let configDraft = { scores: [], deductions: [] };
+let configFormMode = null; // null | 'add-score' | 'edit-score' | 'add-deduction' | 'edit-deduction'
+let configFormEditIndex = -1;
+
+function openConfigPanel() {
+  if (!checkUnlocked()) return;
+  // Deep copy current customItems as draft
+  configDraft = JSON.parse(JSON.stringify(data.customItems || { scores: [], deductions: [] }));
+  renderConfigPanel();
+  document.getElementById('configOverlay').classList.add('show');
+  setTimeout(() => document.getElementById('configPanel').classList.add('show'), 50);
+}
+
+function closeConfigPanel() {
+  document.getElementById('configPanel').classList.remove('show');
+  setTimeout(() => document.getElementById('configOverlay').classList.remove('show'), 350);
+}
+
+function saveConfigPanel() {
+  // Apply draft to data
+  data.customItems = JSON.parse(JSON.stringify(configDraft));
+  // Ensure all weeks have data for new custom items
+  data = ensureWeeks(data);
+  saveData();
+  closeConfigPanel();
+  render();
+  showToast('✅ 自定义项目已保存');
+}
+
+function renderConfigPanel() {
+  let html = '';
+  
+  // Custom Score Items Section
+  html += '<div class="config-section"><h4 style="color:var(--green)">🏆 自定义得分项</h4>';
+  if (configDraft.scores.length === 0) {
+    html += '<div class="config-empty">还没有自定义得分项</div>';
+  } else {
+    configDraft.scores.forEach((item, idx) => {
+      html += `<div class="config-item-row">
+        <div class="ci-icon">${item.icon}</div>
+        <div class="ci-info">
+          <div class="ci-name">${item.name}</div>
+          <div class="ci-rule">${item.rule}</div>
+        </div>
+        <div class="ci-actions">
+          <button class="ci-edit" onclick="editConfigItem('score',${idx})">✏️</button>
+          <button class="ci-delete" onclick="deleteConfigItem('score',${idx})">🗑️</button>
+        </div>
+      </div>`;
+    });
+  }
+  html += '<button class="config-add-btn" onclick="addConfigItem(\'score\')">\u2795 添加得分项</button>';
+  html += '</div>';
+
+  // Custom Deduction Items Section
+  html += '<div class="config-section"><h4 style="color:var(--orange)">⚠️ 自定义扣分项</h4>';
+  if (configDraft.deductions.length === 0) {
+    html += '<div class="config-empty">还没有自定义扣分项</div>';
+  } else {
+    configDraft.deductions.forEach((item, idx) => {
+      html += `<div class="config-item-row">
+        <div class="ci-icon">${item.icon}</div>
+        <div class="ci-info">
+          <div class="ci-name">${item.name}</div>
+          <div class="ci-rule">${item.rule}</div>
+        </div>
+        <div class="ci-actions">
+          <button class="ci-edit" onclick="editConfigItem('deduction',${idx})">✏️</button>
+          <button class="ci-delete" onclick="deleteConfigItem('deduction',${idx})">🗑️</button>
+        </div>
+      </div>`;
+    });
+  }
+  html += '<button class="config-add-btn" onclick="addConfigItem(\'deduction\')">\u2795 添加扣分项</button>';
+  html += '</div>';
+
+  document.getElementById('configPanelBody').innerHTML = html;
+}
+
+function addConfigItem(kind) {
+  configFormMode = 'add-' + kind;
+  configFormEditIndex = -1;
+  showConfigForm(kind, null);
+}
+
+function editConfigItem(kind, idx) {
+  configFormMode = 'edit-' + kind;
+  configFormEditIndex = idx;
+  const list = kind === 'score' ? configDraft.scores : configDraft.deductions;
+  showConfigForm(kind, list[idx]);
+}
+
+function deleteConfigItem(kind, idx) {
+  const list = kind === 'score' ? configDraft.scores : configDraft.deductions;
+  const item = list[idx];
+  if (confirm(`确定删除「${item.icon} ${item.name}」吗？`)) {
+    list.splice(idx, 1);
+    renderConfigPanel();
+  }
+}
+
+function showConfigForm(kind, existingItem) {
+  const isDeduction = kind === 'deduction';
+  const title = existingItem 
+    ? (isDeduction ? '✏️ 编辑扣分项' : '✏️ 编辑得分项')
+    : (isDeduction ? '➕ 添加扣分项' : '➕ 添加得分项');
+  const selectedEmoji = existingItem ? existingItem.icon : '';
+  const selectedType = existingItem ? existingItem.type : 'streak';
+  const selectedPts = existingItem && existingItem.pts ? existingItem.pts : 2;
+  const selectedName = existingItem ? existingItem.name : '';
+
+  let html = `<h4>${title}</h4>`;
+  
+  // Name
+  html += `<div class="form-group"><label>📝 名称</label>
+    <input type="text" id="cfgName" value="${selectedName}" placeholder="例如：画画、发脾气" maxlength="20"></div>`;
+
+  // Emoji
+  html += '<div class="form-group"><label>🎭 图标</label><div class="emoji-grid">';
+  EMOJI_PRESETS.forEach(em => {
+    html += `<button type="button" class="emoji-option ${em === selectedEmoji ? 'selected' : ''}" 
+      onclick="selectEmoji(this,'${em}')">${em}</button>`;
+  });
+  html += '</div>';
+  html += `<div class="emoji-custom-input">
+    <input type="text" id="cfgCustomEmoji" placeholder="自定义" maxlength="2" value="${EMOJI_PRESETS.includes(selectedEmoji) ? '' : selectedEmoji}">
+    <button type="button" style="padding:8px 12px;border:2px solid #e0e0e0;border-radius:10px;background:white;font-size:13px;cursor:pointer" 
+      onclick="applyCustomEmoji()">确定</button>
+  </div></div>`;
+
+  // Type
+  html += `<div class="form-group"><label>📋 计分类型</label>
+    <div class="type-selector">
+      <div class="type-option ${selectedType === 'streak' ? 'selected' : ''}" onclick="selectType('streak')" id="typeStreak">
+        <div class="to-label">🔥 逐天递加</div>
+        <div class="to-desc">每周从1开始，连续第N天${isDeduction ? '扣' : '得'}N分</div>
+      </div>
+      <div class="type-option ${selectedType === 'counter' ? 'selected' : ''}" onclick="selectType('counter')" id="typeCounter">
+        <div class="to-label">📊 固定${isDeduction ? '扣分' : '加分'}</div>
+        <div class="to-desc">每次固定${isDeduction ? '扣' : '得'}分</div>
+      </div>
+    </div></div>`;
+
+  // Points (counter only)
+  html += `<div class="form-group" id="cfgPtsGroup" style="${selectedType === 'counter' ? '' : 'display:none'}">
+    <label>🎯 每次${isDeduction ? '扣' : '得'}分</label>
+    <input type="number" id="cfgPts" min="1" max="100" value="${selectedPts}" placeholder="2"></div>`;
+
+  // Actions
+  html += `<div class="form-actions">
+    <button class="fa-cancel" onclick="closeConfigForm()">取消</button>
+    <button class="fa-save" onclick="saveConfigForm()">确认</button>
+  </div>`;
+
+  document.getElementById('configForm').innerHTML = html;
+  document.getElementById('configFormOverlay').classList.add('show');
+}
+
+let _selectedEmoji = '';
+let _selectedType = 'streak';
+
+function selectEmoji(btn, emoji) {
+  document.querySelectorAll('.emoji-option').forEach(el => el.classList.remove('selected'));
+  btn.classList.add('selected');
+  _selectedEmoji = emoji;
+  document.getElementById('cfgCustomEmoji').value = '';
+}
+
+function applyCustomEmoji() {
+  const v = document.getElementById('cfgCustomEmoji').value.trim();
+  if (v) {
+    document.querySelectorAll('.emoji-option').forEach(el => el.classList.remove('selected'));
+    _selectedEmoji = v;
+    showToast(`图标已选择：${v}`);
+  }
+}
+
+function selectType(type) {
+  _selectedType = type;
+  document.getElementById('typeStreak').className = 'type-option' + (type === 'streak' ? ' selected' : '');
+  document.getElementById('typeCounter').className = 'type-option' + (type === 'counter' ? ' selected' : '');
+  document.getElementById('cfgPtsGroup').style.display = type === 'counter' ? '' : 'none';
+}
+
+function closeConfigForm() {
+  document.getElementById('configFormOverlay').classList.remove('show');
+}
+
+function saveConfigForm() {
+  const name = document.getElementById('cfgName').value.trim();
+  if (!name) { showToast('请输入名称'); return; }
+  
+  // Determine emoji: from selection or from custom input
+  let emoji = _selectedEmoji;
+  const customEmoji = document.getElementById('cfgCustomEmoji').value.trim();
+  if (customEmoji) emoji = customEmoji;
+  // If still empty, check if there's a selected .emoji-option
+  if (!emoji) {
+    const sel = document.querySelector('.emoji-option.selected');
+    if (sel) emoji = sel.textContent;
+  }
+  if (!emoji) { showToast('请选择图标'); return; }
+
+  // Get type from DOM state
+  const type = document.getElementById('typeStreak').classList.contains('selected') ? 'streak' : 'counter';
+  const pts = type === 'counter' ? Math.max(1, parseInt(document.getElementById('cfgPts').value) || 2) : 0;
+
+  const isDeduction = configFormMode.includes('deduction');
+  const isEdit = configFormMode.startsWith('edit');
+  const list = isDeduction ? configDraft.deductions : configDraft.scores;
+
+  // Generate rule text
+  let rule;
+  if (type === 'streak') {
+    rule = isDeduction ? '逐天递加：每周从1开始，连续第N天扣N分' : '逐天递加：每周从1开始，连续第N天得N分';
+  } else {
+    rule = isDeduction ? `每次 -${pts}分` : `每次 +${pts}分`;
+  }
+
+  if (isEdit && configFormEditIndex >= 0 && configFormEditIndex < list.length) {
+    // Edit existing: keep same id
+    const item = list[configFormEditIndex];
+    item.icon = emoji;
+    item.name = name;
+    item.rule = rule;
+    item.type = type;
+    item.pts = pts;
+  } else {
+    // Add new: generate unique id
+    const prefix = isDeduction ? 'custom_d' : 'custom_';
+    const allIds = [...configDraft.scores, ...configDraft.deductions].map(i => i.id);
+    let counter = 1;
+    while (allIds.includes(prefix + counter)) counter++;
+    list.push({
+      id: prefix + counter,
+      icon: emoji,
+      name: name,
+      rule: rule,
+      type: type,
+      pts: pts
+    });
+  }
+
+  closeConfigForm();
+  renderConfigPanel();
+}
+
+// Initialize emoji/type state when form opens
+const origShowConfigForm = showConfigForm;
+showConfigForm = function(kind, existingItem) {
+  _selectedEmoji = existingItem ? existingItem.icon : '';
+  _selectedType = existingItem ? existingItem.type : 'streak';
+  origShowConfigForm(kind, existingItem);
+};
+
+// Prevent config form overlay click from closing (only close via button)
+document.getElementById('configFormOverlay').addEventListener('click', function(e) {
+  if (e.target === document.getElementById('configFormOverlay')) {
+    closeConfigForm();
+  }
+});
 
 render();
 
